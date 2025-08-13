@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "predeploy": "vite build && cp dist/index.html dist/404.html",
+    "predeploy": "vite build && copyfiles dist/index.html dist/404.html",
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
@@ -20,6 +20,7 @@
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^5.0.0",
+    "copyfiles": "^2.4.1",
     "eslint": "^9.33.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
