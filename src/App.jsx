@@ -7,6 +7,7 @@ export default function App() {
     const [screens, setScreens] = useState([]);
     const [error, setError] = useState("");
     const [streams, setStreams] = useState({});
+    const [controlling, setControlling] = useState({});
 
     const videoRefs = useRef({});
 
@@ -49,7 +50,9 @@ export default function App() {
             const { x, y } = toNorm(e);
             send({
                 type: "click",
-                x, y, display,
+                x,
+                y,
+                display,
                 button: e.button === 2 ? "right" : e.button === 1 ? "middle" : "left",
                 count: e.detail || 1,
             });
@@ -135,7 +138,11 @@ export default function App() {
                 if (v.readyState >= 1) res();
                 else v.onloadedmetadata = () => res();
             }).catch(() => {});
-            try { await v.play(); } catch { setTimeout(() => v.play().catch(() => {}), 120); }
+            try {
+                await v.play();
+            } catch {
+                setTimeout(() => v.play().catch(() => {}), 120);
+            }
         });
     }, [streams]);
 
@@ -147,6 +154,7 @@ export default function App() {
             delete next[i];
             return next;
         });
+        setControlling((prev) => ({ ...prev, [i]: false }));
         const v = videoRefs.current[i];
         if (v) v.srcObject = null;
     }
@@ -160,6 +168,7 @@ export default function App() {
             });
             stopCapture(i);
             setStreams((prev) => ({ ...prev, [i]: stream }));
+            setControlling((prev) => ({ ...prev, [i]: false }));
             const [track] = stream.getVideoTracks();
             track.addEventListener("ended", () => stopCapture(i));
         } catch (e) {
@@ -173,13 +182,14 @@ export default function App() {
         screens.forEach((s, i) => {
             const el = videoRefs.current[i];
             const hasStream = Boolean(streams[i]);
-            if (el && hasStream) {
+            const isControlling = Boolean(controlling[i]);
+            if (el && hasStream && isControlling) {
                 const off = bindPreviewHandlers(el, s);
                 if (typeof off === "function") cleanups.push(off);
             }
         });
         return () => cleanups.forEach((off) => off && off());
-    }, [screens, streams, bindPreviewHandlers]);
+    }, [screens, streams, controlling, bindPreviewHandlers]);
 
     useEffect(() => {
         const primary = screens.find((s) => s.isPrimary) || screens[0];
@@ -199,13 +209,18 @@ export default function App() {
         <div className="wrap">
             <header className="toolbar">
                 <h2>Displays Controller</h2>
-                {supported ? (
-                    permission !== "granted" && (
-                        <button className="btn" onClick={requestAccess}>Allow display access</button>
-                    )
-                ) : (
-                    <span className="warn">Unsupported browser</span>
-                )}
+                <div className="toolbar-right">
+                    {supported ? (
+                        permission !== "granted" && (
+                            <button className="btn" onClick={requestAccess}>Allow display access</button>
+                        )
+                    ) : (
+                        <span className="warn">Unsupported browser</span>
+                    )}
+                    <div className="hint">
+                        Press <span className="kbd">Ctrl/Cmd</span> + <span className="kbd">Backspace</span> to return mouse
+                    </div>
+                </div>
             </header>
 
             {error && <div className="error">Error: {error}</div>}
@@ -214,11 +229,23 @@ export default function App() {
                 {screens.map((s, i) => {
                     const label = s.label || `Display ${i + 1}`;
                     const hasStream = Boolean(streams[i]);
+                    const isControlling = Boolean(controlling[i]);
                     return (
                         <div className="card" key={i}>
                             <div className="title">{label}</div>
-                            <div className="preview">
+                            <div
+                                className={`preview ${hasStream && !isControlling ? "control-ready" : ""}`}
+                                onClick={() => {
+                                    if (hasStream && !isControlling) setControlling((p) => ({ ...p, [i]: true }));
+                                }}
+                                onMouseLeave={() => {
+                                    if (hasStream && isControlling) setControlling((p) => ({ ...p, [i]: false }));
+                                }}
+                            >
                                 {!hasStream && <div className="overlay disconnected">Disconnected</div>}
+                                {hasStream && !isControlling && (
+                                    <div className="overlay control-hint">Click to control</div>
+                                )}
                                 <video
                                     className={`video ${!hasStream ? "no-stream" : ""}`}
                                     ref={(el) => (videoRefs.current[i] = el)}
