@@ -6,9 +6,74 @@ export default function App() {
     const [permission, setPermission] = useState("prompt");
     const [screens, setScreens] = useState([]);
     const [error, setError] = useState("");
-
     const [streams, setStreams] = useState({});
+
     const videoRefs = useRef({});
+
+    const send = useCallback((cmd) => {
+        fetch("http://127.0.0.1:27272/input", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(cmd),
+        }).catch(() => {});
+    }, []);
+
+    const bindPreviewHandlers = useCallback((videoEl, screenObj) => {
+        if (!videoEl || !screenObj) return () => {};
+
+        const getRect = () => videoEl.getBoundingClientRect();
+        const toNorm = (e) => {
+            const r = getRect();
+            return {
+                x: (e.clientX - r.left) / r.width,
+                y: (e.clientY - r.top) / r.height,
+            };
+        };
+        const display = {
+            left: screenObj.left ?? 0,
+            top: screenObj.top ?? 0,
+            width: screenObj.width ?? window.screen.width,
+            height: screenObj.height ?? window.screen.height,
+        };
+
+        let lastMoveTs = 0;
+        const onMove = (e) => {
+            const now = performance.now();
+            if (now - lastMoveTs < 8) return;
+            lastMoveTs = now;
+            const { x, y } = toNorm(e);
+            send({ type: "move", x, y, display });
+        };
+
+        const onDown = (e) => {
+            const { x, y } = toNorm(e);
+            send({
+                type: "click",
+                x, y, display,
+                button: e.button === 2 ? "right" : e.button === 1 ? "middle" : "left",
+                count: e.detail || 1,
+            });
+        };
+
+        const onWheel = (e) => {
+            const { x, y } = toNorm(e);
+            send({ type: "wheel", x, y, display, deltaY: e.deltaY });
+        };
+
+        const preventMenu = (e) => e.preventDefault();
+
+        videoEl.addEventListener("mousemove", onMove);
+        videoEl.addEventListener("mousedown", onDown);
+        videoEl.addEventListener("wheel", onWheel, { passive: true });
+        videoEl.addEventListener("contextmenu", preventMenu);
+
+        return () => {
+            videoEl.removeEventListener("mousemove", onMove);
+            videoEl.removeEventListener("mousedown", onDown);
+            videoEl.removeEventListener("wheel", onWheel);
+            videoEl.removeEventListener("contextmenu", preventMenu);
+        };
+    }, [send]);
 
     const attachListeners = useCallback((screenDetails) => {
         const update = () => setScreens([...screenDetails.screens]);
@@ -103,6 +168,33 @@ export default function App() {
         }
     }
 
+    useEffect(() => {
+        const cleanups = [];
+        screens.forEach((s, i) => {
+            const el = videoRefs.current[i];
+            const hasStream = Boolean(streams[i]);
+            if (el && hasStream) {
+                const off = bindPreviewHandlers(el, s);
+                if (typeof off === "function") cleanups.push(off);
+            }
+        });
+        return () => cleanups.forEach((off) => off && off());
+    }, [screens, streams, bindPreviewHandlers]);
+
+    useEffect(() => {
+        const primary = screens.find((s) => s.isPrimary) || screens[0];
+        if (!primary) return;
+        send({
+            type: "setReturnTarget",
+            display: {
+                left: primary.left ?? 0,
+                top: primary.top ?? 0,
+                width: primary.width ?? window.screen.width,
+                height: primary.height ?? window.screen.height,
+            },
+        });
+    }, [screens, send]);
+
     return (
         <div className="wrap">
             <header className="toolbar">
@@ -125,26 +217,21 @@ export default function App() {
                     return (
                         <div className="card" key={i}>
                             <div className="title">{label}</div>
-
                             <div className="preview">
+                                {!hasStream && <div className="overlay disconnected">Disconnected</div>}
                                 <video
-                                    className="video"
+                                    className={`video ${!hasStream ? "no-stream" : ""}`}
                                     ref={(el) => (videoRefs.current[i] = el)}
                                     autoPlay
                                     playsInline
                                     muted
                                 />
                             </div>
-
                             <div className="actions">
                                 {!hasStream ? (
-                                    <button className="btn" onClick={() => startCapture(i)}>
-                                        Connect
-                                    </button>
+                                    <button className="btn" onClick={() => startCapture(i)}>Connect</button>
                                 ) : (
-                                    <button className="btn danger" onClick={() => stopCapture(i)}>
-                                        Disconnect
-                                    </button>
+                                    <button className="btn danger" onClick={() => stopCapture(i)}>Disconnect</button>
                                 )}
                             </div>
                         </div>
