@@ -106,7 +106,7 @@ export default function App() {
     return (
         <div className="wrap">
             <header className="toolbar">
-                <h2>Displays</h2>
+                <h2>Displays Controller</h2>
                 {supported ? (
                     permission !== "granted" && (
                         <button className="btn" onClick={requestAccess}>Allow display access</button>
