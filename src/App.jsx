@@ -233,7 +233,15 @@ export default function App() {
             {error && <div className="error">Error: {error}</div>}
 
             <div className="grid">
-                {screens.map((s, i) => {
+                {[
+                    ...screens,
+                    ...Array.from({ length: 10 }, (_, idx) => ({
+                        label: `Dummy Display ${idx + 1}`,
+                        width: 1920,
+                        height: 1080,
+                        isPrimary: false,
+                    })),
+                ].map((s, i) => {
                     const label = s.label || `Display ${i + 1}`;
                     const hasStream = Boolean(streams[i]);
                     const isControlling = Boolean(controlling[i]);
