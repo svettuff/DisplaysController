@@ -255,7 +255,7 @@ export default function App() {
                             <button
                                 className="btn btn-icon expand-btn"
                                 onClick={() => setExpanded((cur) => (cur === i ? null : i))}
-                                title={expanded === i ? "Свернуть" : "Развернуть"}
+                                title={expanded === i ? "Shrink" : "Expand"}
                             >
                                 {expanded === i ? "—" : "⤢"}
                             </button>
