@@ -8,7 +8,8 @@ export default function App() {
     const [error, setError] = useState("");
     const [streams, setStreams] = useState({});
     const [controlling, setControlling] = useState({});
-
+    const [expanded, setExpanded] = useState(null);
+    const [aspect, setAspect] = useState({});
     const videoRefs = useRef({});
 
     const send = useCallback((cmd) => {
@@ -139,6 +140,10 @@ export default function App() {
                 else v.onloadedmetadata = () => res();
             }).catch(() => {});
             try {
+                const w = v.videoWidth || 16;
+                const h = v.videoHeight || 9;
+                setAspect((prev) => ({ ...prev, [i]: { w, h } }));
+
                 await v.play();
             } catch {
                 setTimeout(() => v.play().catch(() => {}), 120);
@@ -157,6 +162,8 @@ export default function App() {
         setControlling((prev) => ({ ...prev, [i]: false }));
         const v = videoRefs.current[i];
         if (v) v.srcObject = null;
+
+        setExpanded((cur) => (cur === i ? null : cur));
     }
 
     async function startCapture(i) {
@@ -230,11 +237,26 @@ export default function App() {
                     const label = s.label || `Display ${i + 1}`;
                     const hasStream = Boolean(streams[i]);
                     const isControlling = Boolean(controlling[i]);
+
+                    const ratioStr = aspect[i]
+                        ? `${aspect[i].w} / ${aspect[i].h}`
+                        : (s?.width && s?.height ? `${s.width} / ${s.height}` : "16 / 9");
+
                     return (
-                        <div className="card" key={i}>
+                        <div className={`card ${expanded === i ? "expanded" : ""}`} key={i}>
+                            <button
+                                className="btn btn-icon expand-btn"
+                                onClick={() => setExpanded((cur) => (cur === i ? null : i))}
+                                title={expanded === i ? "Свернуть" : "Развернуть"}
+                            >
+                                {expanded === i ? "—" : "⤢"}
+                            </button>
+
                             <div className="title">{label}</div>
+
                             <div
                                 className={`preview ${hasStream && !isControlling ? "control-ready" : ""}`}
+                                style={{ aspectRatio: ratioStr }}
                                 onClick={() => {
                                     if (hasStream && !isControlling) setControlling((p) => ({ ...p, [i]: true }));
                                 }}
@@ -252,8 +274,15 @@ export default function App() {
                                     autoPlay
                                     playsInline
                                     muted
+                                    onLoadedMetadata={(e) => {
+                                        const v = e.currentTarget;
+                                        const w = v.videoWidth || 16;
+                                        const h = v.videoHeight || 9;
+                                        setAspect((prev) => ({ ...prev, [i]: { w, h } }));
+                                    }}
                                 />
                             </div>
+
                             <div className="actions">
                                 {!hasStream ? (
                                     <button className="btn" onClick={() => startCapture(i)}>Connect</button>
