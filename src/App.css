@@ -200,3 +200,5 @@ body {
   right: 8px;
   z-index: 3;
 }
+
+.video { transform: translateZ(0); will-change: transform; }
