@@ -296,7 +296,7 @@ export default function App() {
      * ========================= */
     const items = [
         ...screens,
-        ...Array.from({ length: 10 }, (_, idx) => ({
+        ...Array.from({length: 0}, (_, idx) => ({
             label: `Dummy Display ${idx + 1}`,
             width: 1920,
             height: 1080,
