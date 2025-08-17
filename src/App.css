@@ -69,16 +69,17 @@ body {
 }
 
 .card {
-  position: relative; /* NEW */
+  position: relative;
   border: 1px solid #333;
   border-radius: 12px;
   padding: 12px;
   background: #1e1e1e;
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+  padding-bottom: 48px;
 }
 
 .card.expanded {
-  grid-column: 1 / -1; /* NEW */
+  grid-column: 1 / -1;
 }
 
 .title {
@@ -142,7 +143,13 @@ body {
   padding: 8px;
 }
 
-.actions { margin-top: 8px; }
+.actions {
+  position: absolute;
+  bottom: 12px; /* такой же отступ как и у padding */
+  left: 12px;
+  right: 12px;
+  margin-top: 0; /* убираем прежний отступ */
+}
 
 .overlay {
   position: absolute;
