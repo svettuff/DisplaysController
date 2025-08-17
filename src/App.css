@@ -145,10 +145,10 @@ body {
 
 .actions {
   position: absolute;
-  bottom: 12px; /* такой же отступ как и у padding */
+  bottom: 12px;
   left: 12px;
   right: 12px;
-  margin-top: 0; /* убираем прежний отступ */
+  margin-top: 0;
 }
 
 .overlay {
