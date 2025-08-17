@@ -389,7 +389,15 @@ export default function App() {
                     )}
                     <video
                         className={`video ${!hasStream ? "no-stream" : ""}`}
-                        ref={(el) => (videoRefs.current[i] = el)}
+                        ref={(el) => {
+                            videoRefs.current[i] = el;
+                            const s = streams[i];
+                            if (el && s && el.srcObject !== s) {
+                                el.srcObject = s;
+                                if (el.readyState >= 1) el.play().catch(() => {});
+                                else el.onloadedmetadata = () => el.play().catch(() => {});
+                            }
+                        }}
                         autoPlay
                         playsInline
                         muted
@@ -416,6 +424,11 @@ export default function App() {
             </div>
         );
     };
+
+    const indices = items.map((_, i) => i);
+    const ordered = expanded !== null
+        ? [expanded, ...indices.filter((i) => i !== expanded)]
+        : indices;
 
     return (
         <div className="wrap">
@@ -445,8 +458,7 @@ export default function App() {
             {error && <div className="error">Error: {error}</div>}
 
             <div className="grid">
-                {expanded !== null && renderCard(items[expanded], expanded)}
-                {items.map((s, i) => (expanded === i ? null : renderCard(s, i)))}
+                {ordered.map((i) => renderCard(items[i], i))}
             </div>
         </div>
     );
