@@ -212,6 +212,112 @@ export default function App() {
         });
     }, [screens, send]);
 
+    function scrollToTopSmooth() {
+        requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
+    }
+
+    function scrollElementToCenter(el) {
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const elTop = rect.top + window.scrollY;
+        const target = elTop - (window.innerHeight - rect.height) / 2;
+
+        const maxY = Math.max(
+            0,
+            document.documentElement.scrollHeight - window.innerHeight
+        );
+        const clamped = Math.max(0, Math.min(target, maxY));
+
+        requestAnimationFrame(() =>
+            window.scrollTo({ top: clamped, behavior: "smooth" })
+        );
+    }
+
+    function toggleExpand(i) {
+        if (expanded === i) {
+            setExpanded(null);
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    const el = document.getElementById(`card-${i}`);
+                    if (el) scrollElementToCenter(el);
+                });
+            });
+        } else {
+            setExpanded(i);
+            requestAnimationFrame(() => scrollToTopSmooth());
+        }
+    }
+
+    const items = [
+        ...screens,
+        ...Array.from({ length: 10 }, (_, idx) => ({
+            label: `Dummy Display ${idx + 1}`,
+            width: 1920,
+            height: 1080,
+            isPrimary: false,
+        })),
+    ];
+
+    const renderCard = (s, i) => {
+        const label = s.label || `Display ${i + 1}`;
+        const hasStream = Boolean(streams[i]);
+        const isControlling = Boolean(controlling[i]);
+        const ratioStr = aspect[i]
+            ? `${aspect[i].w} / ${aspect[i].h}`
+            : (s?.width && s?.height ? `${s.width} / ${s.height}` : "16 / 9");
+
+        return (
+            <div id={`card-${i}`} className={`card ${expanded === i ? "expanded" : ""}`} key={i}>
+                <button
+                    className="btn btn-icon expand-btn"
+                    onClick={() => toggleExpand(i)}
+                    title={expanded === i ? "Shrink" : "Expand"}
+                >
+                    {expanded === i ? "—" : "⤢"}
+                </button>
+
+                <div className="title">{label}</div>
+
+                <div
+                    className={`preview ${hasStream && !isControlling ? "control-ready" : ""}`}
+                    style={{ aspectRatio: ratioStr }}
+                    onClick={() => {
+                        if (hasStream && !isControlling) setControlling((p) => ({ ...p, [i]: true }));
+                    }}
+                    onMouseLeave={() => {
+                        if (hasStream && isControlling) setControlling((p) => ({ ...p, [i]: false }));
+                    }}
+                >
+                    {!hasStream && <div className="overlay disconnected">Disconnected</div>}
+                    {hasStream && !isControlling && (
+                        <div className="overlay control-hint">Click to control</div>
+                    )}
+                    <video
+                        className={`video ${!hasStream ? "no-stream" : ""}`}
+                        ref={(el) => (videoRefs.current[i] = el)}
+                        autoPlay
+                        playsInline
+                        muted
+                        onLoadedMetadata={(e) => {
+                            const v = e.currentTarget;
+                            const w = v.videoWidth || 16;
+                            const h = v.videoHeight || 9;
+                            setAspect((prev) => ({ ...prev, [i]: { w, h } }));
+                        }}
+                    />
+                </div>
+
+                <div className="actions">
+                    {!hasStream ? (
+                        <button className="btn" onClick={() => startCapture(i)}>Connect</button>
+                    ) : (
+                        <button className="btn danger" onClick={() => stopCapture(i)}>Disconnect</button>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="wrap">
             <header className="toolbar">
@@ -233,74 +339,8 @@ export default function App() {
             {error && <div className="error">Error: {error}</div>}
 
             <div className="grid">
-                {[
-                    ...screens,
-                    ...Array.from({ length: 10 }, (_, idx) => ({
-                        label: `Dummy Display ${idx + 1}`,
-                        width: 1920,
-                        height: 1080,
-                        isPrimary: false,
-                    })),
-                ].map((s, i) => {
-                    const label = s.label || `Display ${i + 1}`;
-                    const hasStream = Boolean(streams[i]);
-                    const isControlling = Boolean(controlling[i]);
-
-                    const ratioStr = aspect[i]
-                        ? `${aspect[i].w} / ${aspect[i].h}`
-                        : (s?.width && s?.height ? `${s.width} / ${s.height}` : "16 / 9");
-
-                    return (
-                        <div className={`card ${expanded === i ? "expanded" : ""}`} key={i}>
-                            <button
-                                className="btn btn-icon expand-btn"
-                                onClick={() => setExpanded((cur) => (cur === i ? null : i))}
-                                title={expanded === i ? "Shrink" : "Expand"}
-                            >
-                                {expanded === i ? "—" : "⤢"}
-                            </button>
-
-                            <div className="title">{label}</div>
-
-                            <div
-                                className={`preview ${hasStream && !isControlling ? "control-ready" : ""}`}
-                                style={{ aspectRatio: ratioStr }}
-                                onClick={() => {
-                                    if (hasStream && !isControlling) setControlling((p) => ({ ...p, [i]: true }));
-                                }}
-                                onMouseLeave={() => {
-                                    if (hasStream && isControlling) setControlling((p) => ({ ...p, [i]: false }));
-                                }}
-                            >
-                                {!hasStream && <div className="overlay disconnected">Disconnected</div>}
-                                {hasStream && !isControlling && (
-                                    <div className="overlay control-hint">Click to control</div>
-                                )}
-                                <video
-                                    className={`video ${!hasStream ? "no-stream" : ""}`}
-                                    ref={(el) => (videoRefs.current[i] = el)}
-                                    autoPlay
-                                    playsInline
-                                    muted
-                                    onLoadedMetadata={(e) => {
-                                        const v = e.currentTarget;
-                                        const w = v.videoWidth || 16;
-                                        const h = v.videoHeight || 9;
-                                        setAspect((prev) => ({ ...prev, [i]: { w, h } }));
-                                    }}
-                                />
-                            </div>
-
-                            <div className="actions">
-                                {!hasStream ? (
-                                    <button className="btn" onClick={() => startCapture(i)}>Connect</button>
-                                ) : (
-                                    <button className="btn danger" onClick={() => stopCapture(i)}>Disconnect</button>
-                                )}
-                            </div>
-                        </div>
-                    );
-                })}
+                {expanded !== null && renderCard(items[expanded], expanded)}
+                {items.map((s, i) => (expanded === i ? null : renderCard(s, i)))}
             </div>
         </div>
     );
