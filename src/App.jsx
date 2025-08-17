@@ -14,6 +14,13 @@ export default function App() {
     const [expanded, setExpanded] = useState(null);
     const [aspect, setAspect] = useState({});
     const videoRefs = useRef({});
+    const [os, setOs] = useState("unknown");
+    const [agentRunning, setAgentRunning] = useState(false);
+
+    useEffect(() => {
+        setOs(detectOS());
+        isAgentUp().then(setAgentRunning);
+    }, []);
 
     /* =========================
      * Utilities
@@ -115,6 +122,35 @@ export default function App() {
             return () => {};
         }
     }, [attachListeners]);
+
+    function detectOS() {
+        const p = (navigator.userAgentData?.platform || navigator.platform || "").toLowerCase();
+        const ua = (navigator.userAgent || "").toLowerCase();
+        if (p.includes("win") || ua.includes("windows")) return "windows";
+        if (p.includes("mac") || ua.includes("mac os") || ua.includes("macintosh")) return "mac";
+        if (p.includes("linux") || ua.includes("linux")) return "linux";
+        return "unknown";
+    }
+
+    async function isAgentUp(ms = 600) {
+        try {
+            const ctrl = new AbortController();
+            const t = setTimeout(() => ctrl.abort(), ms);
+            const r = await fetch("http://127.0.0.1:27272/", { signal: ctrl.signal });
+            clearTimeout(t);
+            return r.ok;
+        } catch { return false; }
+    }
+
+    const AGENT_URLS = {
+        windows: "https://github.com/svettuff/DisplaysControllerAgent/releases/download/Agent/DisplaysControllerAgent.exe",
+        mac:     "https://github.com/svettuff/DisplaysControllerAgent/releases/download/Agent2/DisplaysControllerAgent.app.zip",
+    };
+
+    const onInstallAgent = useCallback(() => {
+        const url = os === "mac" ? AGENT_URLS.mac : AGENT_URLS.windows;
+        window.open(url, "_blank", "noopener");
+    }, [os]);
 
     /* =========================
      * Effects: capability & permission
@@ -386,6 +422,11 @@ export default function App() {
             <header className="toolbar">
                 <h2>Displays Controller</h2>
                 <div className="toolbar-right">
+                    {!agentRunning && (
+                        <button className="btn" onClick={onInstallAgent} title={`Download agent for ${os}`}>
+                            ⚠️ Install agent to control displays
+                        </button>
+                    )}
                     {supported ? (
                         permission !== "granted" && (
                             <button className="btn" onClick={requestAccess}>
@@ -396,8 +437,7 @@ export default function App() {
                         <span className="warn">Unsupported browser</span>
                     )}
                     <div className="hint">
-                        Press <span className="kbd">Ctrl/Cmd</span> +{" "}
-                        <span className="kbd">Backspace</span> to return mouse
+                        Press <span className="kbd">Ctrl/Cmd</span> + <span className="kbd">Backspace</span> to return mouse
                     </div>
                 </div>
             </header>
