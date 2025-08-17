@@ -143,8 +143,8 @@ export default function App() {
     }
 
     const AGENT_URLS = {
-        windows: "https://github.com/svettuff/DisplaysControllerAgent/releases/download/Agent/DisplaysControllerAgent.exe",
-        mac:     "https://github.com/svettuff/DisplaysControllerAgent/releases/download/Agent2/DisplaysControllerAgent.app.zip",
+        windows: "https://github.com/svettuff/DisplaysControllerAgentReleases/releases/download/Agent/DisplaysControllerAgent.exe",
+        mac:     "https://github.com/svettuff/DisplaysControllerAgentReleases/releases/download/Agent2/DisplaysControllerAgent.app.zip",
     };
 
     const onInstallAgent = useCallback(() => {
