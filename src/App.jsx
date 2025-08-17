@@ -2,6 +2,9 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import "./App.css";
 
 export default function App() {
+    /* =========================
+     * State & Refs
+     * ========================= */
     const [supported, setSupported] = useState(false);
     const [permission, setPermission] = useState("prompt");
     const [screens, setScreens] = useState([]);
@@ -12,6 +15,9 @@ export default function App() {
     const [aspect, setAspect] = useState({});
     const videoRefs = useRef({});
 
+    /* =========================
+     * Utilities
+     * ========================= */
     const send = useCallback((cmd) => {
         fetch("http://127.0.0.1:27272/input", {
             method: "POST",
@@ -20,64 +26,70 @@ export default function App() {
         }).catch(() => {});
     }, []);
 
-    const bindPreviewHandlers = useCallback((videoEl, screenObj) => {
-        if (!videoEl || !screenObj) return () => {};
+    const bindPreviewHandlers = useCallback(
+        (videoEl, screenObj) => {
+            if (!videoEl || !screenObj) return () => {};
 
-        const getRect = () => videoEl.getBoundingClientRect();
-        const toNorm = (e) => {
-            const r = getRect();
-            return {
-                x: (e.clientX - r.left) / r.width,
-                y: (e.clientY - r.top) / r.height,
+            const getRect = () => videoEl.getBoundingClientRect();
+            const toNorm = (e) => {
+                const r = getRect();
+                return {
+                    x: (e.clientX - r.left) / r.width,
+                    y: (e.clientY - r.top) / r.height,
+                };
             };
-        };
-        const display = {
-            left: screenObj.left ?? 0,
-            top: screenObj.top ?? 0,
-            width: screenObj.width ?? window.screen.width,
-            height: screenObj.height ?? window.screen.height,
-        };
 
-        let lastMoveTs = 0;
-        const onMove = (e) => {
-            const now = performance.now();
-            if (now - lastMoveTs < 8) return;
-            lastMoveTs = now;
-            const { x, y } = toNorm(e);
-            send({ type: "move", x, y, display });
-        };
+            const display = {
+                left: screenObj.left ?? 0,
+                top: screenObj.top ?? 0,
+                width: screenObj.width ?? window.screen.width,
+                height: screenObj.height ?? window.screen.height,
+            };
 
-        const onDown = (e) => {
-            const { x, y } = toNorm(e);
-            send({
-                type: "click",
-                x,
-                y,
-                display,
-                button: e.button === 2 ? "right" : e.button === 1 ? "middle" : "left",
-                count: e.detail || 1,
-            });
-        };
+            let lastMoveTs = 0;
 
-        const onWheel = (e) => {
-            const { x, y } = toNorm(e);
-            send({ type: "wheel", x, y, display, deltaY: e.deltaY });
-        };
+            const onMove = (e) => {
+                const now = performance.now();
+                if (now - lastMoveTs < 8) return;
+                lastMoveTs = now;
+                const { x, y } = toNorm(e);
+                send({ type: "move", x, y, display });
+            };
 
-        const preventMenu = (e) => e.preventDefault();
+            const onDown = (e) => {
+                const { x, y } = toNorm(e);
+                send({
+                    type: "click",
+                    x,
+                    y,
+                    display,
+                    button:
+                        e.button === 2 ? "right" : e.button === 1 ? "middle" : "left",
+                    count: e.detail || 1,
+                });
+            };
 
-        videoEl.addEventListener("mousemove", onMove);
-        videoEl.addEventListener("mousedown", onDown);
-        videoEl.addEventListener("wheel", onWheel, { passive: true });
-        videoEl.addEventListener("contextmenu", preventMenu);
+            const onWheel = (e) => {
+                const { x, y } = toNorm(e);
+                send({ type: "wheel", x, y, display, deltaY: e.deltaY });
+            };
 
-        return () => {
-            videoEl.removeEventListener("mousemove", onMove);
-            videoEl.removeEventListener("mousedown", onDown);
-            videoEl.removeEventListener("wheel", onWheel);
-            videoEl.removeEventListener("contextmenu", preventMenu);
-        };
-    }, [send]);
+            const preventMenu = (e) => e.preventDefault();
+
+            videoEl.addEventListener("mousemove", onMove);
+            videoEl.addEventListener("mousedown", onDown);
+            videoEl.addEventListener("wheel", onWheel, { passive: true });
+            videoEl.addEventListener("contextmenu", preventMenu);
+
+            return () => {
+                videoEl.removeEventListener("mousemove", onMove);
+                videoEl.removeEventListener("mousedown", onDown);
+                videoEl.removeEventListener("wheel", onWheel);
+                videoEl.removeEventListener("contextmenu", preventMenu);
+            };
+        },
+        [send]
+    );
 
     const attachListeners = useCallback((screenDetails) => {
         const update = () => setScreens([...screenDetails.screens]);
@@ -104,14 +116,20 @@ export default function App() {
         }
     }, [attachListeners]);
 
+    /* =========================
+     * Effects: capability & permission
+     * ========================= */
     useEffect(() => {
         const ok = "getScreenDetails" in window;
         setSupported(ok);
+
         (async () => {
             if (!ok) return;
             try {
                 if (navigator.permissions?.query) {
-                    const st = await navigator.permissions.query({ name: "window-management" });
+                    const st = await navigator.permissions.query({
+                        name: "window-management",
+                    });
                     setPermission(st.state);
                     st.onchange = () => setPermission(st.state);
                 }
@@ -127,6 +145,9 @@ export default function App() {
         return () => detach();
     }, [supported, permission, requestAccess]);
 
+    /* =========================
+     * Effects: video streams attach/play
+     * ========================= */
     useEffect(() => {
         Object.entries(streams).forEach(async ([k, stream]) => {
             const i = Number(k);
@@ -135,10 +156,12 @@ export default function App() {
             if (v.srcObject === stream) return;
 
             v.srcObject = stream;
+
             await new Promise((res) => {
                 if (v.readyState >= 1) res();
                 else v.onloadedmetadata = () => res();
             }).catch(() => {});
+
             try {
                 const w = v.videoWidth || 16;
                 const h = v.videoHeight || 9;
@@ -151,39 +174,9 @@ export default function App() {
         });
     }, [streams]);
 
-    function stopCapture(i) {
-        setStreams((prev) => {
-            const st = prev[i];
-            if (st) st.getTracks().forEach((t) => t.stop());
-            const next = { ...prev };
-            delete next[i];
-            return next;
-        });
-        setControlling((prev) => ({ ...prev, [i]: false }));
-        const v = videoRefs.current[i];
-        if (v) v.srcObject = null;
-
-        setExpanded((cur) => (cur === i ? null : cur));
-    }
-
-    async function startCapture(i) {
-        setError("");
-        try {
-            const stream = await navigator.mediaDevices.getDisplayMedia({
-                video: { displaySurface: "monitor", logicalSurface: true, frameRate: { ideal: 30, max: 60 } },
-                audio: false,
-            });
-            stopCapture(i);
-            setStreams((prev) => ({ ...prev, [i]: stream }));
-            setControlling((prev) => ({ ...prev, [i]: false }));
-            const [track] = stream.getVideoTracks();
-            track.addEventListener("ended", () => stopCapture(i));
-        } catch (e) {
-            if (e?.name === "NotAllowedError") return;
-            setError(e?.message || String(e));
-        }
-    }
-
+    /* =========================
+     * Effects: bind/unbind remote-control handlers
+     * ========================= */
     useEffect(() => {
         const cleanups = [];
         screens.forEach((s, i) => {
@@ -198,6 +191,9 @@ export default function App() {
         return () => cleanups.forEach((off) => off && off());
     }, [screens, streams, controlling, bindPreviewHandlers]);
 
+    /* =========================
+     * Effects: set return target
+     * ========================= */
     useEffect(() => {
         const primary = screens.find((s) => s.isPrimary) || screens[0];
         if (!primary) return;
@@ -212,8 +208,55 @@ export default function App() {
         });
     }, [screens, send]);
 
+    /* =========================
+     * Capture controls
+     * ========================= */
+    function stopCapture(i) {
+        setStreams((prev) => {
+            const st = prev[i];
+            if (st) st.getTracks().forEach((t) => t.stop());
+            const next = { ...prev };
+            delete next[i];
+            return next;
+        });
+        setControlling((prev) => ({ ...prev, [i]: false }));
+
+        const v = videoRefs.current[i];
+        if (v) v.srcObject = null;
+
+        setExpanded((cur) => (cur === i ? null : cur));
+    }
+
+    async function startCapture(i) {
+        setError("");
+        try {
+            const stream = await navigator.mediaDevices.getDisplayMedia({
+                video: {
+                    displaySurface: "monitor",
+                    logicalSurface: true,
+                    frameRate: { ideal: 30, max: 60 },
+                },
+                audio: false,
+            });
+            stopCapture(i);
+            setStreams((prev) => ({ ...prev, [i]: stream }));
+            setControlling((prev) => ({ ...prev, [i]: false }));
+
+            const [track] = stream.getVideoTracks();
+            track.addEventListener("ended", () => stopCapture(i));
+        } catch (e) {
+            if (e?.name === "NotAllowedError") return;
+            setError(e?.message || String(e));
+        }
+    }
+
+    /* =========================
+     * UI helpers
+     * ========================= */
     function scrollToTopSmooth() {
-        requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
+        requestAnimationFrame(() =>
+            window.scrollTo({ top: 0, behavior: "smooth" })
+        );
     }
 
     function scrollElementToCenter(el) {
@@ -248,6 +291,9 @@ export default function App() {
         }
     }
 
+    /* =========================
+     * Data
+     * ========================= */
     const items = [
         ...screens,
         ...Array.from({ length: 10 }, (_, idx) => ({
@@ -258,16 +304,25 @@ export default function App() {
         })),
     ];
 
+    /* =========================
+     * Render
+     * ========================= */
     const renderCard = (s, i) => {
         const label = s.label || `Display ${i + 1}`;
         const hasStream = Boolean(streams[i]);
         const isControlling = Boolean(controlling[i]);
         const ratioStr = aspect[i]
             ? `${aspect[i].w} / ${aspect[i].h}`
-            : (s?.width && s?.height ? `${s.width} / ${s.height}` : "16 / 9");
+            : s?.width && s?.height
+                ? `${s.width} / ${s.height}`
+                : "16 / 9";
 
         return (
-            <div id={`card-${i}`} className={`card ${expanded === i ? "expanded" : ""}`} key={i}>
+            <div
+                id={`card-${i}`}
+                className={`card ${expanded === i ? "expanded" : ""}`}
+                key={i}
+            >
                 <button
                     className="btn btn-icon expand-btn"
                     onClick={() => toggleExpand(i)}
@@ -282,13 +337,17 @@ export default function App() {
                     className={`preview ${hasStream && !isControlling ? "control-ready" : ""}`}
                     style={{ aspectRatio: ratioStr }}
                     onClick={() => {
-                        if (hasStream && !isControlling) setControlling((p) => ({ ...p, [i]: true }));
+                        if (hasStream && !isControlling)
+                            setControlling((p) => ({ ...p, [i]: true }));
                     }}
                     onMouseLeave={() => {
-                        if (hasStream && isControlling) setControlling((p) => ({ ...p, [i]: false }));
+                        if (hasStream && isControlling)
+                            setControlling((p) => ({ ...p, [i]: false }));
                     }}
                 >
-                    {!hasStream && <div className="overlay disconnected">Disconnected</div>}
+                    {!hasStream && (
+                        <div className="overlay disconnected">Disconnected</div>
+                    )}
                     {hasStream && !isControlling && (
                         <div className="overlay control-hint">Click to control</div>
                     )}
@@ -309,9 +368,13 @@ export default function App() {
 
                 <div className="actions">
                     {!hasStream ? (
-                        <button className="btn" onClick={() => startCapture(i)}>Connect</button>
+                        <button className="btn" onClick={() => startCapture(i)}>
+                            Connect
+                        </button>
                     ) : (
-                        <button className="btn danger" onClick={() => stopCapture(i)}>Disconnect</button>
+                        <button className="btn danger" onClick={() => stopCapture(i)}>
+                            Disconnect
+                        </button>
                     )}
                 </div>
             </div>
@@ -325,13 +388,16 @@ export default function App() {
                 <div className="toolbar-right">
                     {supported ? (
                         permission !== "granted" && (
-                            <button className="btn" onClick={requestAccess}>Allow display access</button>
+                            <button className="btn" onClick={requestAccess}>
+                                Allow display access
+                            </button>
                         )
                     ) : (
                         <span className="warn">Unsupported browser</span>
                     )}
                     <div className="hint">
-                        Press <span className="kbd">Ctrl/Cmd</span> + <span className="kbd">Backspace</span> to return mouse
+                        Press <span className="kbd">Ctrl/Cmd</span> +{" "}
+                        <span className="kbd">Backspace</span> to return mouse
                     </div>
                 </div>
             </header>
