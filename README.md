@@ -1,7 +1,4 @@
-<h1>
-  Displays Controller
-  <img src="public/logo-transparent.png" alt="logo" width="70" style="vertical-align: middle; margin-left: -5px; margin-top: -10px;" />
-</h1>
+# Displays Controller
 
 #### A tool that makes it easy to **view** and **control** all displays connected to your computer
 
