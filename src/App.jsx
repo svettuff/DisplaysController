@@ -148,8 +148,8 @@ export default function App() {
     };
 
     const onInstallAgent = useCallback(() => {
-        const url = os === "mac" ? AGENT_URLS.mac : AGENT_URLS.windows;
-        window.open(url, "_blank", "noopener");
+        //const url = os === "mac" ? AGENT_URLS.mac : AGENT_URLS.windows;
+        window.open(AGENT_URLS.windows, "_blank", "noopener");
     }, [os]);
 
     /* =========================
