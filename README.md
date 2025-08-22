@@ -28,7 +28,7 @@
 
 ![3.gif](public/3.gif)
 
-### Agent Installation
+## Agent Installation
 
 **To control your displays please install simple agent**
 
