@@ -14,6 +14,20 @@
 [![macOS](https://img.shields.io/badge/macOS-In%20Progress-orange?logo=apple)](#)
 [![Linux](https://img.shields.io/badge/Linux-In%20Progress-orange?logo=linux)](#)
 
+## Usage
+
+### Connect your displays
+
+![1.gif](public/1.gif)
+
+### Maximize and minimize previews
+
+![2.gif](public/2.gif)
+
+### Click to control _(p.s. Display is behind my back)_
+
+![3.gif](public/3.gif)
+
 ### Agent Installation
 
 **To control your displays please install simple agent**
