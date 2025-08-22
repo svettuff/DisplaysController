@@ -138,7 +138,7 @@ export default function App() {
             const t = setTimeout(() => ctrl.abort(), ms);
             const r = await fetch("http://127.0.0.1:27272/", { signal: ctrl.signal });
             clearTimeout(t);
-            return false;
+            return r.ok;
         } catch { return false; }
     }
 
