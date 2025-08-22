@@ -1,8 +1,8 @@
 # Displays Controller
 
-#### A tool that makes it easy to **view** and **control** all displays connected to your computer.
+#### A tool that makes it easy to **view** and **control** all displays connected to your computer
 
-#### Link: https://svettuff.github.io/DisplaysController/
+#### Link to Control Panel: https://svettuff.github.io/DisplaysController/
 
 ### Supported Browsers
 
@@ -16,13 +16,13 @@
 
 ### Agent Installation
 
-**To control your displays please install simple agent.**
+**To control your displays please install simple agent**
 
 Follow this simple steps:
 
-1. Click this button
+1. Click this button in **[Control Panel](https://svettuff.github.io/DisplaysController/)**
 
     ![img.png](public/img.png)
 
-2. Open downloaded .exe file **"DisplaysControllerAgent"**
-3. All is done! Next time it will start automatically.
+2. Open downloaded `.exe` file **"DisplaysControllerAgent"**
+3. All is done! Next time it will start automatically
