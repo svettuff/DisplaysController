@@ -7,6 +7,7 @@
 ### Supported Browsers
 
 [![Chrome](https://img.shields.io/badge/Chrome-Supported-brightgreen?logo=google-chrome)](#)
+[![Edge](https://img.shields.io/badge/Edge-Supported-brightgreen?logo=microsoft-edge)](#)
 
 ### Agent Supported Systems
 
