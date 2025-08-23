@@ -6,14 +6,14 @@
 
 ### Supported Browsers
 
-[![Chrome](https://img.shields.io/badge/Chrome-Supported-brightgreen?logo=google-chrome)](#)
-[![Edge](https://img.shields.io/badge/Edge-Supported-brightgreen?logo=microsoft-edge)](#)
+[![Chrome](https://img.shields.io/badge/Chrome-Supported-brightgreen?logo=googlechrome&logoColor=white)](#)
+[![Edge](https://img.shields.io/badge/Edge-Supported-brightgreen?logo=microsoftedge&logoColor=white)](#)
 
 ### Agent Supported Systems
 
-[![Windows](https://img.shields.io/badge/Windows-Supported-brightgreen?logo=windows)](#)
-[![macOS](https://img.shields.io/badge/macOS-In%20Progress-orange?logo=apple)](#)
-[![Linux](https://img.shields.io/badge/Linux-In%20Progress-orange?logo=linux)](#)
+[![Windows](https://img.shields.io/badge/Windows-Supported-brightgreen?logo=windows&logoColor=white)](#)
+[![macOS](https://img.shields.io/badge/macOS-In%20Progress-orange?logo=apple&logoColor=white)](#)
+[![Linux](https://img.shields.io/badge/Linux-In%20Progress-orange?logo=linux&logoColor=white)](#)
 
 ## Usage
 
