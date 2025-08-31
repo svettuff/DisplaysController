@@ -1,4 +1,4 @@
-# [Displays Controller](https://svettuff.github.io/DisplaysController/)
+# Displays Controller
 
 #### A tool that makes it easy to **view** and **control** all displays connected to your computer
 #### Link to Control Panel: https://svettuff.github.io/DisplaysController/
