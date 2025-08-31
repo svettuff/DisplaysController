@@ -1,8 +1,9 @@
 # [Displays Controller](https://svettuff.github.io/DisplaysController/)
 
 #### A tool that makes it easy to **view** and **control** all displays connected to your computer
-
 #### Link to Control Panel: https://svettuff.github.io/DisplaysController/
+
+<img src="public/logo-transparent.png" alt="logo" width="400" height="auto">
 
 #### Join our Discord community to ask questions, share ideas, report bugs and get support!
 
