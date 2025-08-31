@@ -4,8 +4,6 @@
 
 #### Link to Control Panel: https://svettuff.github.io/DisplaysController/
 
-### Discord
-
 #### Join our Discord community to ask questions, share ideas, report bugs and get support!
 
 [![Discord](https://img.shields.io/badge/Discord-Join%20Us-5865F2?logo=discord&logoColor=white)](https://discord.gg/9cwKge3j)
